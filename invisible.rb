@@ -54,7 +54,7 @@ class INVISIBLE
     private def evaluate()
         # ここに実行の処理を書く
     end
-
+end
 
 # 実行
 INVISIBLE.new
