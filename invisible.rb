@@ -70,7 +70,7 @@ class INVISIBLE
             constructs = parse(tokens)
 
             # 意味解析実行
-            #evaluate(constructs)
+            evaluate(constructs)
         rescue => e
             @logger.debug(e)
             @logger.fatal(e.message)
@@ -124,31 +124,34 @@ class INVISIBLE
             case @tokens[@pos]
             when :if
                 @pos += 1
-                return if_statement()
+                return nil
             when :repeat
                 @pos += 1
-                return repeat_statement()
+                return nil
             when :print
                 @pos += 1
-                return print_statement()
+                return [:print, num()]
             else
-                return assignment_statement()
+                return nil
             end
         end
 
-        def if_statement()
-        end
-
-        def repeat_statement()
-        end
-
-        def print_statement()
-        end
-
-        def assignment_statement()
-        end
-
-        def num()
+        def num(endpoint = :semicolon)
+            num_s = ""
+            while @tokens[@pos] != endpoint
+                @logger.debug("@tokens[#{@pos}]: #{@tokens[@pos]}")
+                if @tokens[@pos] == :high
+                    num_s += "1"
+                elsif @tokens[@pos] == :low
+                    num_s += "0"
+                else
+                    raise Exception, "数値が不正です"
+                end
+                @pos += 1
+            end
+            @pos += 1
+            @logger.debug("num: #{num_s}")
+            return num_s.to_i(2)
         end
 
         constructs = sentences()
@@ -156,11 +159,34 @@ class INVISIBLE
 
         remove_instance_variable(:@tokens)
         remove_instance_variable(:@pos)
+
+        return constructs
     end
 
     # 解釈実行
-    private def evaluate(tokens)
-        # ここに実行の処理を書く
+    private def evaluate(constructs)
+        @logger.debug("constructs: #{constructs}")
+        if constructs.instance_of?(Array)
+            case constructs[0]
+            when :block
+                constructs[1..-1].each do |token|
+                    evaluate(token)
+                end
+            when :if
+            when :repeat
+            when :print
+                print(constructs[1].chr)
+            when :assign
+            when :variable
+            when :integer
+            when :add
+            when :sub
+            when :mul
+            when :div
+            end
+        else
+            return tokens
+        end
     end
 
     private def get_token(code_scanner)
