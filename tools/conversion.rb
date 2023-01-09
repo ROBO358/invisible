@@ -80,6 +80,7 @@ begin
     Keywords.keys.each do |key|
         Keywords[key.to_s] = Keywords.delete(key)
     end
+    Keywords[";"] = Keywords.delete("semicolon")
 
     @logger.debug(Keywords)
 
