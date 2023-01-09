@@ -67,11 +67,12 @@ class INVISIBLE
             tokens = tokenize(code)
 
             # 構文解析実行
-            #constructs = parse(tokens)
+            constructs = parse(tokens)
 
             # 意味解析実行
             #evaluate(constructs)
         rescue => e
+            @logger.debug(e)
             @logger.fatal(e.message)
             exit
         end
@@ -88,10 +89,10 @@ class INVISIBLE
         @logger.debug("code(Unicodeコードポイント): #{code.codepoints.map{|v| v.to_s(16)}}")
 
         # 文字列をトークンに分割
-        @scanner = StringScanner.new(code)
+        code_scanner = StringScanner.new(code)
         tokens = []
-        while !@scanner.eos?
-            token = get_token(@scanner)
+        while !code_scanner.eos?
+            token = get_token(code_scanner)
             if token.nil?
                 @logger.fatal("不正な文字が含まれています")
                 exit
@@ -104,8 +105,57 @@ class INVISIBLE
     end
 
     # 構文解析
-    private def parse(code)
-        # ここに構文解析の処理を書く
+    private def parse(tokens)
+        @tokens = tokens
+        @pos = 0
+
+        def sentences()
+            unless s = sentence()
+                raise Exception, "文がありません"
+            end
+            result = [:block, s]
+            while s = sentence()
+                result << s
+            end
+            return result
+        end
+
+        def sentence()
+            case @tokens[@pos]
+            when :if
+                @pos += 1
+                return if_statement()
+            when :repeat
+                @pos += 1
+                return repeat_statement()
+            when :print
+                @pos += 1
+                return print_statement()
+            else
+                return assignment_statement()
+            end
+        end
+
+        def if_statement()
+        end
+
+        def repeat_statement()
+        end
+
+        def print_statement()
+        end
+
+        def assignment_statement()
+        end
+
+        def num()
+        end
+
+        constructs = sentences()
+        @logger.debug("constructs: #{constructs}")
+
+        remove_instance_variable(:@tokens)
+        remove_instance_variable(:@pos)
     end
 
     # 解釈実行
@@ -115,9 +165,9 @@ class INVISIBLE
 
     private def get_token(code_scanner)
         # ここで、トークンの種類を判別する
-        if  @scanner.scan(/(?:#{Keywords.keys.map{|key|Regexp.escape(key)}.join('|')})/)
-            @logger.debug("matched_key: #{@scanner.matched.codepoints.map{|v| v.to_s(16)}.join(",")}")
-            return Keywords[@scanner.matched]
+        if  code_scanner.scan(/(?:#{Keywords.keys.map{|key|Regexp.escape(key)}.join('|')})/)
+            @logger.debug("matched_key: #{code_scanner.matched.codepoints.map{|v| v.to_s(16)}.join(",")}")
+            return Keywords[code_scanner.matched]
         else
             @logger.debug("matched: nil")
             return nil
@@ -125,10 +175,10 @@ class INVISIBLE
     end
 
     private def unget_token(code_scanner)
-        @logger.debug("unget: #{@scanner.matched}")
-        @logger.debug("scanner_before: #{@scanner.inspect}")
-        @scanner.unscan if !token.nil?
-        @logger.debug("scanner_after: #{@scanner.inspect}")
+        @logger.debug("unget: #{code_scanner.matched}")
+        @logger.debug("scanner_before: #{code_scanner.inspect}")
+        code_scanner.unscan if !token.nil?
+        @logger.debug("scanner_after: #{code_scanner.inspect}")
     end
 end
 
