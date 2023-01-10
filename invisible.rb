@@ -82,6 +82,18 @@ class INVISIBLE
 
     # 字句解析
     private def tokenize(code)
+
+        def get_token(code_scanner)
+            # ここで、トークンの種類を判別する
+            if  code_scanner.scan(/(?:#{Keywords.keys.map{|key|Regexp.escape(key)}.join('|')})/)
+                @logger.debug("matched_key: #{code_scanner.matched.codepoints.map{|v| v.to_s(16)}.join(",")}")
+                return Keywords[code_scanner.matched]
+            else
+                @logger.debug("matched: nil")
+                return nil
+            end
+        end
+
         # 不要なコメントを削除
         code = code.gsub(/[^#{Keywords.keys.map{|key|Regexp.escape(key)}.join()}]/, '')
 
@@ -109,6 +121,17 @@ class INVISIBLE
         @tokens = tokens
         @pos = 0
 
+        def get_token()
+            token = @tokens[@pos]
+            @pos += 1
+            return token
+        end
+
+        def unget_token()
+            @pos -= 1
+            return @tokens[@pos]
+        end
+
         def sentences()
             unless s = sentence()
                 raise Exception, "文がありません"
@@ -121,35 +144,33 @@ class INVISIBLE
         end
 
         def sentence()
-            case @tokens[@pos]
+            case get_token()
             when :if
-                @pos += 1
                 return nil
             when :repeat
-                @pos += 1
                 return nil
             when :print
-                @pos += 1
                 return [:print, num()]
             else
                 return nil
             end
         end
 
-        def num(endpoint = :semicolon)
+        def num()
             num_s = ""
-            while @tokens[@pos] != endpoint
-                @logger.debug("@tokens[#{@pos}]: #{@tokens[@pos]}")
-                if @tokens[@pos] == :high
+            token = get_token()
+
+            while token == :high || token == :low
+                @logger.debug("token: #{token}")
+                if token == :high
                     num_s += "1"
-                elsif @tokens[@pos] == :low
+                elsif token == :low
                     num_s += "0"
                 else
                     raise Exception, "数値が不正です"
                 end
-                @pos += 1
+                token = get_token()
             end
-            @pos += 1
             @logger.debug("num: #{num_s}")
             return num_s.to_i(2)
         end
