@@ -81,6 +81,10 @@ begin
         Keywords[key.to_s] = Keywords.delete(key)
     end
     Keywords[";"] = Keywords.delete("semicolon")
+    Keywords["+"] = Keywords.delete("add")
+    Keywords["-"] = Keywords.delete("sub")
+    Keywords["*"] = Keywords.delete("mul")
+    Keywords["/"] = Keywords.delete("div")
 
     @logger.debug(Keywords)
 
