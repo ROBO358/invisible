@@ -89,7 +89,7 @@ begin
     @logger.debug(Keywords)
 
     code.gsub!(/\s+/, "")
-    code.gsub!(/(#{Keywords.keys.join('|')})/, Keywords)
+    code.gsub!(/(#{Keywords.keys.map{|key|Regexp.escape(key)}.join('|')})/, Keywords)
     code.gsub!(/\d+/) {|matched| to_binary(matched.to_i)}
 
     @logger.debug("code: #{code}")
