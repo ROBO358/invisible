@@ -24,7 +24,16 @@ Keywords = {
 }
 
 def to_binary(num)
-    binary = num.to_s(2)
+    @logger.debug("to_binary(#{num})")
+    binary = ""
+    if num[0] == ":"
+        num = num[1..-1]
+        binary = "‍"
+    else
+        binary = "‌"
+    end
+
+    binary += num.to_s(2)
 
     binary.gsub!(/0/, "‌")
     binary.gsub!(/1/, "‍")
@@ -90,7 +99,7 @@ begin
 
     code.gsub!(/\s+/, "")
     code.gsub!(/(#{Keywords.keys.map{|key|Regexp.escape(key)}.join('|')})/, Keywords)
-    code.gsub!(/\d+/) {|matched| to_binary(matched.to_i)}
+    code.gsub!(/\:?\d+/) {|matched| to_binary(matched.to_i)}
 
     @logger.debug("code: #{code}")
     @logger.debug("code(Unicodeコードポイント): #{code.codepoints.map{|v| v.to_s(16)}}")
