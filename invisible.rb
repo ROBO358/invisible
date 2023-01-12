@@ -132,6 +132,7 @@ class INVISIBLE
             return @tokens[@pos]
         end
 
+        # 文列
         def sentences()
             unless s = sentence()
                 raise Exception, "文がありません"
@@ -143,6 +144,7 @@ class INVISIBLE
             return result
         end
 
+        # 文
         def sentence()
             case get_token()
             when :if
@@ -150,29 +152,94 @@ class INVISIBLE
             when :repeat
                 return nil
             when :print
-                return [:print, num()]
+                return [:print, expression()]
             else
                 return nil
             end
         end
 
-        def num()
-            num_s = ""
+        # 式
+        def expression()
+            result = _term()
             token = get_token()
+            @logger.debug("expression_token: #{token}")
 
-            while token == :high || token == :low
-                @logger.debug("token: #{token}")
-                if token == :high
-                    num_s += "1"
-                elsif token == :low
-                    num_s += "0"
-                else
-                    raise Exception, "数値が不正です"
-                end
+            while token == :add || token == :sub
+                result = [token, result, _term()]
                 token = get_token()
             end
-            @logger.debug("num: #{num_s}")
-            return num_s.to_i(2)
+            unget_token() if token != :semicolon
+            @logger.debug("expression_result: #{result}")
+            return result
+        end
+
+        # 項と因子を分けているのは、演算子の優先順位を実装するため
+
+        # 項
+        def _term()
+            result = _factor()
+            token = get_token()
+
+            while token == :mul || token == :div
+                result = [token, result, _factor()]
+                token = get_token()
+            end
+            unget_token()
+            @logger.debug("term_result: #{result}")
+            return result
+        end
+
+        # 因子
+        def _factor()
+            token = get_token()
+            @logger.debug("factor_token: #{token}")
+            if token == :left_parn
+                result = expression()
+                token = get_token()
+                if token != :right_parn
+                    raise(Exception, "')'がありません")
+                end
+                @logger.debug("factor_result: #{result}")
+                return result
+            elsif token == :high || token == :low
+                num = num()
+                @logger.debug("factor_result(num): #{num}")
+                return num
+            else
+                raise(Exception, "数値または'('がありません")
+            end
+        end
+
+        # 数値を取得
+        def num()
+            token = get_token()
+
+            def get_num(token)
+                num_s = ""
+                while token == :high || token == :low
+                    @logger.debug("token: #{token}")
+                    if token == :high
+                        num_s += "1"
+                    elsif token == :low
+                        num_s += "0"
+                    else
+                        raise Exception, "数値が不正です"
+                    end
+                    token = get_token()
+                end
+                unget_token()
+                @logger.debug("token: #{token}")
+                @logger.debug("num: #{num_s.to_i(2)}")
+                return num_s.to_i(2)
+            end
+
+            if token == :low
+                return [:variable, get_num(token)]
+            elsif token == :high
+                return [:integer, get_num(token)]
+            else
+                raise Exception, "数値が不正です"
+            end
         end
 
         constructs = sentences()
@@ -196,11 +263,14 @@ class INVISIBLE
             when :if
             when :repeat
             when :print
-                print(constructs[1].chr)
+                print(evaluate(constructs[1]).chr)
             when :assign
             when :variable
             when :integer
+                return constructs[1]
             when :add
+                @logger.debug("add: #{evaluate(constructs[1])} + #{evaluate(constructs[2])}")
+                return evaluate(constructs[1]) + evaluate(constructs[2])
             when :sub
             when :mul
             when :div
