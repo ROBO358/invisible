@@ -95,6 +95,7 @@ begin
     Keywords["-"] = Keywords.delete("sub")
     Keywords["*"] = Keywords.delete("mul")
     Keywords["/"] = Keywords.delete("div")
+    Keywords[":="] = Keywords.delete("assign")
 
     @logger.debug(Keywords)
 
