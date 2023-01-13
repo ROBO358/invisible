@@ -69,6 +69,8 @@ class INVISIBLE
             # 構文解析実行
             constructs = parse(tokens)
 
+            # 変数のハッシュリセット
+            @variables = Hash.new
             # 意味解析実行
             evaluate(constructs)
         rescue => e
@@ -153,8 +155,17 @@ class INVISIBLE
                 return nil
             when :print
                 return [:print, expression()]
-            else
-                return nil
+            when :high
+                unget_token()
+                variable = num()
+                @logger.debug("variable: #{variable}")
+                if variable[0] != :variable
+                    raise Exception, "変数がありません"
+                end
+                if get_token() != :assign
+                    raise Exception, "代入演算子がありません"
+                end
+                return [:assign, variable, expression()]
             end
         end
 
@@ -202,6 +213,7 @@ class INVISIBLE
                 @logger.debug("factor_result: #{result}")
                 return result
             elsif token == :high || token == :low
+                unget_token()
                 num = num()
                 @logger.debug("factor_result(num): #{num}")
                 return num
@@ -228,15 +240,15 @@ class INVISIBLE
                     token = get_token()
                 end
                 unget_token()
-                @logger.debug("token: #{token}")
                 @logger.debug("num: #{num_s.to_i(2)}")
                 return num_s.to_i(2)
             end
 
+            @logger.debug("num_token: #{token}")
             if token == :low
-                return [:variable, get_num(token)]
+                return [:integer, get_num(get_token())]
             elsif token == :high
-                return [:integer, get_num(token)]
+                return [:variable, get_num(get_token())]
             else
                 raise Exception, "数値が不正です"
             end
@@ -265,7 +277,13 @@ class INVISIBLE
             when :print
                 print(evaluate(constructs[1]).chr)
             when :assign
+                if constructs[1][0] != :variable
+                    raise Exception, "変数がありません"
+                end
+                @logger.debug("assign: #{constructs[1][1]} = #{evaluate(constructs[2])}")
+                @variables[constructs[1][1]] = evaluate(constructs[2])
             when :variable
+                return @variables[constructs[1]]
             when :integer
                 return constructs[1]
             when :add
