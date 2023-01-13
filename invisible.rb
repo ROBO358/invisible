@@ -290,8 +290,11 @@ class INVISIBLE
                 @logger.debug("add: #{evaluate(constructs[1])} + #{evaluate(constructs[2])}")
                 return evaluate(constructs[1]) + evaluate(constructs[2])
             when :sub
+                return evaluate(constructs[1]) - evaluate(constructs[2])
             when :mul
+                return evaluate(constructs[1]) * evaluate(constructs[2])
             when :div
+                return evaluate(constructs[1]) / evaluate(constructs[2])
             end
         else
             return tokens
