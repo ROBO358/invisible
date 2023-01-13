@@ -27,9 +27,10 @@ def to_binary(num)
     @logger.debug("to_binary(#{num})")
     binary = ""
     if num[0] == ":"
-        num = num[1..-1]
+        num = num[1..-1].to_i
         binary = "‍"
     else
+        num = num.to_i
         binary = "‌"
     end
 
@@ -99,7 +100,7 @@ begin
 
     code.gsub!(/\s+/, "")
     code.gsub!(/(#{Keywords.keys.map{|key|Regexp.escape(key)}.join('|')})/, Keywords)
-    code.gsub!(/\:?\d+/) {|matched| to_binary(matched.to_i)}
+    code.gsub!(/\:?\d+/) {|matched| to_binary(matched)}
 
     @logger.debug("code: #{code}")
     @logger.debug("code(Unicodeコードポイント): #{code.codepoints.map{|v| v.to_s(16)}}")
