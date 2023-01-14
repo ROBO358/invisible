@@ -150,12 +150,25 @@ class INVISIBLE
         def sentence()
             case get_token()
             when :if
-                return nil
+                conditional_expression = expression()
+                @logger.debug("conditional_expression: #{conditional_expression}")
+                raise Exception, "thenがありません" if get_token() != :then
+                then_sentence = sentence()
+                @logger.debug("then_sentences: #{then_sentence}")
+                if get_token() != :else
+                    @logger.debug("elseがありません")
+                    unget_token()
+
+                    return [:if, conditional_expression, then_sentence]
+                end
+                else_sentence = sentence()
+                @logger.debug("else_sentences: #{else_sentence}")
+                return [:if, conditional_expression, then_sentence, else_sentence]
             when :repeat
                 return nil
             when :print
                 return [:print, expression()]
-            when :high
+            when :high # assign
                 unget_token()
                 variable = num()
                 @logger.debug("variable: #{variable}")
@@ -166,6 +179,11 @@ class INVISIBLE
                     raise Exception, "代入演算子がありません"
                 end
                 return [:assign, variable, expression()]
+            else
+                unget_token()
+                @logger.debug("nil sentence: #{get_token()}")
+                unget_token()
+                return nil
             end
         end
 
@@ -273,6 +291,12 @@ class INVISIBLE
                     evaluate(token)
                 end
             when :if
+                @logger.debug("if_constructs: #{constructs}")
+                if evaluate(constructs[1]) != 0
+                    evaluate(constructs[2])
+                elsif constructs[3] != nil
+                    evaluate(constructs[3])
+                end
             when :repeat
             when :print
                 print(evaluate(constructs[1]).chr)
