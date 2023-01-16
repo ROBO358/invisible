@@ -315,6 +315,7 @@ class INVISIBLE
                 @logger.debug("assign: #{constructs[1][1]} = #{evaluate(constructs[2])}")
                 @variables[constructs[1][1]] = evaluate(constructs[2])
             when :variable
+                raise Exception, "変数がありません" if @variables[constructs[1]] == nil
                 return @variables[constructs[1]]
             when :integer
                 return constructs[1]
