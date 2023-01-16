@@ -60,8 +60,8 @@ class INVISIBLE
 
         begin
             # 実行するところ
-            # @logger.debug("code: #{code}")
-            # @logger.debug("code(Unicodeコードポイント): #{code.codepoints.map{|v| v.to_s(16)}}")
+            @logger.debug("code: #{code}")
+            @logger.debug("code(Unicodeコードポイント): #{code.codepoints.map{|v| v.to_s(16)}}")
 
             # 字句解析実行
             tokens = tokenize(code)
@@ -149,6 +149,10 @@ class INVISIBLE
         # 文
         def sentence()
             case get_token()
+            when :left_brace
+                s = sentences()
+                raise Exception, "右括弧がありません" if get_token() != :right_brace
+                return s
             when :if
                 conditional_expression = expression()
                 @logger.debug("conditional_expression: #{conditional_expression}")
@@ -165,7 +169,7 @@ class INVISIBLE
                 @logger.debug("else_sentences: #{else_sentence}")
                 return [:if, conditional_expression, then_sentence, else_sentence]
             when :repeat
-                return nil
+                return [:repeat, expression(), sentence()]
             when :print
                 return [:print, expression()]
             when :high # assign
@@ -298,6 +302,10 @@ class INVISIBLE
                     evaluate(constructs[3])
                 end
             when :repeat
+                @logger.debug("repeat_constructs: #{constructs}")
+                while evaluate(constructs[1]) != 0
+                    evaluate(constructs[2])
+                end
             when :print
                 print(evaluate(constructs[1]).chr)
             when :assign
