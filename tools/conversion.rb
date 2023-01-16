@@ -96,6 +96,10 @@ begin
     Keywords["*"] = Keywords.delete("mul")
     Keywords["/"] = Keywords.delete("div")
     Keywords[":="] = Keywords.delete("assign")
+    Keywords["("] = Keywords.delete("left_parn")
+    Keywords[")"] = Keywords.delete("right_parn")
+    Keywords["{"] = Keywords.delete("left_brace")
+    Keywords["}"] = Keywords.delete("right_brace")
 
     @logger.debug(Keywords)
 
