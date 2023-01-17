@@ -15,6 +15,8 @@ class INVISIBLE
         "؜" => :else,    # else      U+061C
         "⁡" => :repeat,          # repeat    U+2061
         "⁣" => :print,           # print     U+2063
+        "⁢" => :read_cha,        # read_cha U+2062
+        " " => :read_num,       # read_num  U+205F
         " " => :add,            # +         U+2000
         " " => :sub,            # -         U+2001
         " " => :mul,            # *         U+2002
@@ -151,6 +153,8 @@ class INVISIBLE
             case get_token()
             when :left_brace
                 s = sentences()
+                @logger.debug("sentences: #{s}")
+                unget_token if get_token() != :semicolon
                 raise Exception, "右括弧がありません" if get_token() != :right_brace
                 return s
             when :if
@@ -158,20 +162,31 @@ class INVISIBLE
                 @logger.debug("conditional_expression: #{conditional_expression}")
                 raise Exception, "thenがありません" if get_token() != :then
                 then_sentence = sentence()
+                unget_token if get_token() != :semicolon
                 @logger.debug("then_sentences: #{then_sentence}")
                 if get_token() != :else
                     @logger.debug("elseがありません")
                     unget_token()
-
                     return [:if, conditional_expression, then_sentence]
                 end
                 else_sentence = sentence()
+                unget_token if get_token() != :semicolon
                 @logger.debug("else_sentences: #{else_sentence}")
                 return [:if, conditional_expression, then_sentence, else_sentence]
             when :repeat
                 return [:repeat, expression(), sentence()]
             when :print
                 return [:print, expression()]
+            when :read_cha
+                num = num()
+                unget_token if get_token() != :semicolon
+                raise Exception, "変数がありません" if num[0] != :variable
+                return [:read_cha, num]
+            when :read_num
+                num = num()
+                unget_token() if get_token() != :semicolon
+                raise Exception, "変数がありません" if num[0] != :variable
+                return [:read_num, num]
             when :high # assign
                 unget_token()
                 variable = num()
@@ -183,10 +198,14 @@ class INVISIBLE
                     raise Exception, "代入演算子がありません"
                 end
                 return [:assign, variable, expression()]
+            when :right_brace
+                unget_token()
+                return nil
             else
                 unget_token()
-                @logger.debug("nil sentence: #{get_token()}")
-                unget_token()
+                @logger.debug("nil sentence: #{get_token()}"); unget_token()
+                unget_token() if get_token() != :semicolon
+                @logger.debug("tokens[pos-3..pos+3]: #{@tokens[@pos-3..@pos+3]}")
                 return nil
             end
         end
@@ -203,6 +222,7 @@ class INVISIBLE
             end
             unget_token() if token != :semicolon
             @logger.debug("expression_result: #{result}")
+            @logger.debug("next_token: #{get_token}"); unget_token()
             return result
         end
 
@@ -308,6 +328,16 @@ class INVISIBLE
                 end
             when :print
                 print(evaluate(constructs[1]).chr)
+            when :read_cha
+                @logger.debug("read_cha: #{constructs[1]}")
+                raise Exception, "変数がありません" if constructs[1][0] != :variable
+                @variables[constructs[1][1]] = $stdin.getc.ord
+                @logger.debug("read_cha: #{@variables}")
+            when :read_num
+                @logger.debug("read_num: #{constructs[1]}")
+                raise Exception, "変数がありません" if constructs[1][0] != :variable
+                @variables[constructs[1][1]] = $stdin.gets.to_i
+                @logger.debug("read_num: #{@variables}")
             when :assign
                 if constructs[1][0] != :variable
                     raise Exception, "変数がありません"
