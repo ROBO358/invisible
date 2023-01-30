@@ -14,8 +14,9 @@ class INVISIBLE
         "͏" => :then,            # then      U+0034F
         "؜" => :else,    # else      U+061C
         "⁡" => :repeat,          # repeat    U+2061
-        "⁣" => :print,           # print     U+2063
-        "⁢" => :read_cha,        # read_cha U+2062
+        "⁠" => :print_cha,       # print_cha U+2060
+        "⁣" => :print_num,       # print_num U+2063
+        "⁢" => :read_cha,        # read_cha  U+2062
         " " => :read_num,       # read_num  U+205F
         " " => :add,            # +         U+2000
         " " => :sub,            # -         U+2001
@@ -69,11 +70,13 @@ class INVISIBLE
             tokens = tokenize(code)
 
             # 構文解析実行
+            @logger.debug("### 構文解析実行 ###")
             constructs = parse(tokens)
 
             # 変数のハッシュリセット
             @variables = Hash.new
             # 意味解析実行
+            @logger.debug("### 意味解析実行 ###")
             evaluate(constructs)
         rescue => e
             @logger.debug(e)
@@ -145,6 +148,7 @@ class INVISIBLE
             while s = sentence()
                 result << s
             end
+            @logger.debug("sentences: #{result}")
             return result
         end
 
@@ -175,8 +179,10 @@ class INVISIBLE
                 return [:if, conditional_expression, then_sentence, else_sentence]
             when :repeat
                 return [:repeat, expression(), sentence()]
-            when :print
-                return [:print, expression()]
+            when :print_cha
+                return [:print_cha, expression()]
+            when :print_num
+                return [:print_num, expression()]
             when :read_cha
                 num = num()
                 unget_token if get_token() != :semicolon
@@ -297,7 +303,7 @@ class INVISIBLE
         end
 
         constructs = sentences()
-        @logger.debug("constructs: #{constructs}")
+        @logger.debug("構文解析DONE:constructs: #{constructs}")
 
         remove_instance_variable(:@tokens)
         remove_instance_variable(:@pos)
@@ -326,8 +332,10 @@ class INVISIBLE
                 while evaluate(constructs[1]) != 0
                     evaluate(constructs[2])
                 end
-            when :print
+            when :print_cha
                 print(evaluate(constructs[1]).chr)
+            when :print_num
+                print(evaluate(constructs[1]))
             when :read_cha
                 @logger.debug("read_cha: #{constructs[1]}")
                 raise Exception, "変数がありません" if constructs[1][0] != :variable
