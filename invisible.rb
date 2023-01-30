@@ -371,24 +371,6 @@ class INVISIBLE
             return tokens
         end
     end
-
-    private def get_token(code_scanner)
-        # ここで、トークンの種類を判別する
-        if  code_scanner.scan(/(?:#{Keywords.keys.map{|key|Regexp.escape(key)}.join('|')})/)
-            @logger.debug("matched_key: #{code_scanner.matched.codepoints.map{|v| v.to_s(16)}.join(",")}")
-            return Keywords[code_scanner.matched]
-        else
-            @logger.debug("matched: nil")
-            return nil
-        end
-    end
-
-    private def unget_token(code_scanner)
-        @logger.debug("unget: #{code_scanner.matched}")
-        @logger.debug("scanner_before: #{code_scanner.inspect}")
-        code_scanner.unscan if !token.nil?
-        @logger.debug("scanner_after: #{code_scanner.inspect}")
-    end
 end
 
 # 実行
