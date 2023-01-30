@@ -5,7 +5,7 @@
 
 [Unicode characters you can not see ( https://invisible-characters.com/ )](https://invisible-characters.com/)を参考に表示されない文字たちで構成された言語
 
-全体的な構文は、botailと同じである。変数名やリテラルは、2進数で表現される。
+変数名やリテラルは、2進数で表現される。
 
 ## 言語仕様
 
